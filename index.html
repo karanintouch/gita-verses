@@ -184,6 +184,7 @@
   }
   .chapter-btn .titles{ flex:1; min-width:0; }
   .chapter-btn .sk{ font-family:var(--font-sk); font-size:1.02rem; display:block; }
+  .chapter-btn .sk.roman{ font-family:var(--font-serif); font-style:italic; font-size:.98rem; }
   .chapter-btn .en{ font-size:.72rem; color:var(--ink-muted); display:block; margin-top:1px; }
   .chapter-btn .count{ font-size:.7rem; color:var(--ink-faint); flex:none; }
   .chapter-btn .chev{ flex:none; transition:transform .18s; color:var(--ink-faint); }
@@ -732,19 +733,31 @@
 
   function refStr(c,v){ return c + "." + v; }
 
-  // chapter subtitle follows the selected translation language — Hindi only
-  // when Hindi is the sole active language, English otherwise (or as fallback)
+  // chapter name + subtitle follow the selected translation language —
+  // Devanagari + Hindi meaning only when Hindi is the sole active language,
+  // Latin transliteration + English meaning otherwise (English is primary/default)
   function chapterMeaning(ch){
     if (state.langs.hi && !state.langs.en) return ch.meaning_hi || ch.meaning;
     return ch.meaning;
   }
+  function chapterTitle(ch){
+    if (state.langs.hi && !state.langs.en) return ch.sk;
+    return ch.translit || ch.tr || ch.sk;
+  }
+  function chapterTitleIsRoman(){
+    return !(state.langs.hi && !state.langs.en);
+  }
 
   function updateSidebarLanguage(){
+    var roman = chapterTitleIsRoman();
     document.querySelectorAll(".chapter").forEach(function(el){
       var n = parseInt(el.dataset.chapter,10);
       var ch = chapterOf(n);
+      if (!ch) return;
+      var sk = el.querySelector(".chapter-btn .sk");
       var en = el.querySelector(".chapter-btn .en");
-      if (ch && en) en.textContent = chapterMeaning(ch);
+      if (sk){ sk.textContent = chapterTitle(ch); sk.classList.toggle("roman", roman); }
+      if (en) en.textContent = chapterMeaning(ch);
     });
   }
 
@@ -1008,9 +1021,10 @@
 
       var btn = document.createElement("button");
       btn.className = "chapter-btn";
+      var skClass = "sk" + (chapterTitleIsRoman() ? " roman" : "");
       btn.innerHTML =
         '<span class="num">'+ch.n+'</span>' +
-        '<span class="titles"><span class="sk">'+ch.sk+'</span><span class="en">'+chapterMeaning(ch)+'</span></span>' +
+        '<span class="titles"><span class="'+skClass+'">'+chapterTitle(ch)+'</span><span class="en">'+chapterMeaning(ch)+'</span></span>' +
         '<span class="count">'+ch.count+'</span>' +
         '<span class="chev">▸</span>';
       btn.addEventListener("click", function(){ wrap.classList.toggle("open"); });
