@@ -37,43 +37,43 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:            hsl(23, 22%, 9%);
-      --surface:       hsl(24, 20%, 12%);
-      --surface-raise: hsl(25, 18%, 15%);
-      --ink:           hsl(36, 28%, 92%);
-      --ink-muted:     hsl(32, 14%, 68%);
-      --ink-faint:     hsl(30, 10%, 48%);
-      --border:        hsl(26, 16%, 22%);
-      --border-strong: hsl(26, 14%, 30%);
-      --accent:        hsl(30, 80%, 58%);
-      --accent-ink:    hsl(27, 60%, 10%);
-      --instr:         hsl(152, 40%, 62%);
-      --instr-bg:      hsl(152, 40%, 62% / .14);
-      --instr-bg-strong: hsl(152, 40%, 62% / .22);
-      --promise:       hsl(213, 60%, 72%);
-      --promise-bg:    hsl(213, 60%, 72% / .14);
-      --promise-bg-strong: hsl(213, 60%, 72% / .22);
-      --shadow: 0 1px 2px hsl(0 0% 0% / .3), 0 8px 28px -12px hsl(0 0% 0% / .55);
+      --bg:            hsl(22, 18%, 7%);
+      --surface:       hsl(23, 16%, 12%);
+      --surface-raise: hsl(24, 15%, 17%);
+      --ink:           hsl(36, 22%, 93%);
+      --ink-muted:     hsl(32, 12%, 70%);
+      --ink-faint:     hsl(30, 9%, 50%);
+      --border:        hsl(25, 14%, 24%);
+      --border-strong: hsl(25, 13%, 33%);
+      --accent:        hsl(28, 85%, 60%);
+      --accent-ink:    hsl(26, 70%, 8%);
+      --instr:         hsl(150, 35%, 58%);
+      --instr-bg:      hsl(150, 35%, 58% / .12);
+      --instr-bg-strong: hsl(150, 35%, 58% / .20);
+      --promise:       hsl(212, 50%, 68%);
+      --promise-bg:    hsl(212, 50%, 68% / .12);
+      --promise-bg-strong: hsl(212, 50%, 68% / .20);
+      --shadow: 0 1px 2px hsl(0 0% 0% / .4), 0 12px 32px -14px hsl(0 0% 0% / .65);
     }
   }
   :root[data-theme="dark"]{
-    --bg:            hsl(23, 22%, 9%);
-    --surface:       hsl(24, 20%, 12%);
-    --surface-raise: hsl(25, 18%, 15%);
-    --ink:           hsl(36, 28%, 92%);
-    --ink-muted:     hsl(32, 14%, 68%);
-    --ink-faint:     hsl(30, 10%, 48%);
-    --border:        hsl(26, 16%, 22%);
-    --border-strong: hsl(26, 14%, 30%);
-    --accent:        hsl(30, 80%, 58%);
-    --accent-ink:    hsl(27, 60%, 10%);
-    --instr:         hsl(152, 40%, 62%);
-    --instr-bg:      hsl(152, 40%, 62% / .14);
-    --instr-bg-strong: hsl(152, 40%, 62% / .22);
-    --promise:       hsl(213, 60%, 72%);
-    --promise-bg:    hsl(213, 60%, 72% / .14);
-    --promise-bg-strong: hsl(213, 60%, 72% / .22);
-    --shadow: 0 1px 2px hsl(0 0% 0% / .3), 0 8px 28px -12px hsl(0 0% 0% / .55);
+    --bg:            hsl(22, 18%, 7%);
+    --surface:       hsl(23, 16%, 12%);
+    --surface-raise: hsl(24, 15%, 17%);
+    --ink:           hsl(36, 22%, 93%);
+    --ink-muted:     hsl(32, 12%, 70%);
+    --ink-faint:     hsl(30, 9%, 50%);
+    --border:        hsl(25, 14%, 24%);
+    --border-strong: hsl(25, 13%, 33%);
+    --accent:        hsl(28, 85%, 60%);
+    --accent-ink:    hsl(26, 70%, 8%);
+    --instr:         hsl(150, 35%, 58%);
+    --instr-bg:      hsl(150, 35%, 58% / .12);
+    --instr-bg-strong: hsl(150, 35%, 58% / .20);
+    --promise:       hsl(212, 50%, 68%);
+    --promise-bg:    hsl(212, 50%, 68% / .12);
+    --promise-bg-strong: hsl(212, 50%, 68% / .20);
+    --shadow: 0 1px 2px hsl(0 0% 0% / .4), 0 12px 32px -14px hsl(0 0% 0% / .65);
   }
 
   *{ box-sizing:border-box; }
@@ -205,11 +205,12 @@
     background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700;
   }
   .v-btn .dot{
-    position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%;
+    position:absolute; top:3px; width:6px; height:6px; border-radius:50%;
+    box-shadow:0 0 0 1px var(--surface-raise);
   }
-  .v-btn .dot.i{ background:var(--instr); }
-  .v-btn .dot.p{ background:var(--promise); }
-  .v-btn[aria-current="true"] .dot{ background:var(--accent-ink); }
+  .v-btn .dot.i{ right:10px; background:var(--instr); }
+  .v-btn .dot.p{ right:3px; background:var(--promise); }
+  .v-btn[aria-current="true"] .dot{ background:var(--accent-ink); box-shadow:0 0 0 1px var(--accent); }
 
   /* ---------- main / reading pane ---------- */
   #main{
@@ -731,6 +732,22 @@
 
   function refStr(c,v){ return c + "." + v; }
 
+  // chapter subtitle follows the selected translation language — Hindi only
+  // when Hindi is the sole active language, English otherwise (or as fallback)
+  function chapterMeaning(ch){
+    if (state.langs.hi && !state.langs.en) return ch.meaning_hi || ch.meaning;
+    return ch.meaning;
+  }
+
+  function updateSidebarLanguage(){
+    document.querySelectorAll(".chapter").forEach(function(el){
+      var n = parseInt(el.dataset.chapter,10);
+      var ch = chapterOf(n);
+      var en = el.querySelector(".chapter-btn .en");
+      if (ch && en) en.textContent = chapterMeaning(ch);
+    });
+  }
+
   // ordered list of all verse refs, built from chapter counts
   function allRefs(){
     var out = [];
@@ -832,7 +849,7 @@
     var tags = tagOf(ref);
 
     document.getElementById("chap-eyebrow").textContent =
-      "Chapter " + chapter.n + " · " + chapter.meaning;
+      "Chapter " + chapter.n + " · " + chapterMeaning(chapter);
     document.getElementById("verse-title").textContent = "Bhagavad Gita " + ref;
     document.getElementById("ref-mobile").textContent = ref;
 
@@ -993,7 +1010,7 @@
       btn.className = "chapter-btn";
       btn.innerHTML =
         '<span class="num">'+ch.n+'</span>' +
-        '<span class="titles"><span class="sk">'+ch.sk+'</span><span class="en">'+ch.meaning+'</span></span>' +
+        '<span class="titles"><span class="sk">'+ch.sk+'</span><span class="en">'+chapterMeaning(ch)+'</span></span>' +
         '<span class="count">'+ch.count+'</span>' +
         '<span class="chev">▸</span>';
       btn.addEventListener("click", function(){ wrap.classList.toggle("open"); });
@@ -1142,7 +1159,7 @@
         var onCount = Object.keys(state.langs).filter(function(k){ return state.langs[k]; }).length;
         if (state.langs[key] && onCount <= 1) return; // keep at least one language
         state.langs[key] = !state.langs[key];
-        syncSettingsUI(); savePrefs(); render(true);
+        syncSettingsUI(); savePrefs(); render(true); updateSidebarLanguage();
       });
     });
   }
