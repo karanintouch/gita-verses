@@ -205,3 +205,117 @@ test("instructions/promises info popover opens on tap and defines both terms", a
   await page.click("#info-scrim", { position: { x: 5, y: 5 } });
   await page.waitForSelector("#info-popover", { state: "hidden" });
 });
+
+// Playwright has no built-in "drag a real touchscreen finger" primitive with
+// exact deltas, so these dispatch synthetic TouchEvents directly — the same
+// events wireSwipeGestures() itself listens for.
+async function swipe(startX, startY, endX, endY) {
+  await page.evaluate(
+    ({ startX, startY, endX, endY }) => {
+      const el = document.getElementById("content-pane");
+      function fire(type, x, y) {
+        const touch = new Touch({ identifier: Date.now(), target: el, clientX: x, clientY: y });
+        const isEnd = type === "touchend";
+        el.dispatchEvent(
+          new TouchEvent(type, {
+            touches: isEnd ? [] : [touch],
+            changedTouches: [touch],
+            targetTouches: isEnd ? [] : [touch],
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+      fire("touchstart", startX, startY);
+      fire("touchend", endX, endY);
+    },
+    { startX, startY, endX, endY }
+  );
+}
+
+test("mobile: swiping left/right on the reading pane moves between verses", async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await goto("?c=2&v=47");
+
+  await swipe(300, 400, 100, 400); // swipe left -> next verse
+  await page.waitForFunction(() => document.getElementById("verse-title").textContent.includes("2.48"));
+
+  await swipe(100, 400, 300, 400); // swipe right -> previous verse
+  await page.waitForFunction(() => document.getElementById("verse-title").textContent.includes("2.47"));
+
+  await page.setViewportSize({ width: 1400, height: 900 });
+});
+
+test("mobile: swiping from the very left edge opens the sidebar instead of navigating", async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await goto("?c=2&v=47");
+
+  await swipe(5, 400, 150, 400); // starts within the edge zone
+  await page.waitForSelector("#sidebar.open");
+  const title = await page.textContent("#verse-title");
+  assert.equal(title, "Bhagavad Gita 2.47", "an edge-swipe should open the sidebar, not also navigate verses");
+
+  await page.setViewportSize({ width: 1400, height: 900 });
+});
+
+test("mobile: primary icon buttons meet the 44px minimum touch target", async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await goto("?c=2&v=47");
+  for (const sel of ["#menu-btn", "#prev-m", "#next-m", "#settings-btn-m"]) {
+    const box = await page.$eval(sel, (el) => {
+      const r = el.getBoundingClientRect();
+      return { w: r.width, h: r.height };
+    });
+    assert.ok(box.w >= 44 && box.h >= 44, `${sel} is ${box.w}x${box.h}, expected at least 44x44`);
+  }
+  await page.setViewportSize({ width: 1400, height: 900 });
+});
+
+test("shows a loading state while data is in flight, then reveals the verse card", async () => {
+  await page.route("**/data/verses.json", async (route) => {
+    await new Promise((r) => setTimeout(r, 300));
+    await route.continue();
+  });
+  const nav = page.goto(`${baseUrl}/index.html`);
+  await page.waitForSelector("#loading-state", { state: "visible" });
+  const cardHiddenWhileLoading = await page.evaluate(
+    () => getComputedStyle(document.getElementById("card")).display === "none"
+  );
+  assert.ok(cardHiddenWhileLoading, "#card should be display:none while #loading-state is showing");
+
+  await nav;
+  await page.waitForSelector("#loading-state", { state: "hidden" });
+  const cardVisibleAfterLoad = await page.evaluate(
+    () => getComputedStyle(document.getElementById("card")).display !== "none"
+  );
+  assert.ok(cardVisibleAfterLoad, "#card should be shown once loading finishes");
+
+  await page.unroute("**/data/verses.json");
+});
+
+test("mobile: no content inside the closed sidebar bleeds onto the visible screen, at any width", async () => {
+  // General guard for the whole bug class (not just the two specific
+  // instances already fixed): the sidebar is hidden off-canvas via a
+  // transform, so *any* descendant — including ones with their own
+  // absolute positioning and negative offsets, like #sidebar-close — must
+  // end up fully off-screen while closed. Checked across a range of widths
+  // since the sidebar's own rendered width varies (up to its 260px
+  // min-width) relative to the viewport.
+  for (const width of [320, 340, 360, 400]) {
+    await page.setViewportSize({ width, height: 640 });
+    await goto("?c=2&v=47");
+    const leaks = await page.evaluate(() => {
+      const sidebar = document.getElementById("sidebar");
+      const offenders = [];
+      sidebar.querySelectorAll("*").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 && r.right > 0) {
+          offenders.push({ id: el.id || el.className, right: Math.round(r.right) });
+        }
+      });
+      return offenders;
+    });
+    assert.deepEqual(leaks, [], `at ${width}px, closed-sidebar descendants bleeding on-screen: ${JSON.stringify(leaks)}`);
+  }
+  await page.setViewportSize({ width: 1400, height: 900 });
+});

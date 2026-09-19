@@ -98,3 +98,25 @@ test("filter tab labels (\"Instructions (N)\", \"Promises (N)\") match the actua
     `tab label says ${labelPromiseCount} but PROMISES has ${promises.length} — update the hardcoded label in buildFilterTabs()`
   );
 });
+
+test("manifest.json is valid and its icon files exist", () => {
+  const manifestPath = path.join(ROOT, "manifest.json");
+  assert.ok(fs.existsSync(manifestPath), "manifest.json should exist at the repo root");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  assert.ok(Array.isArray(manifest.icons) && manifest.icons.length > 0, "manifest.json should declare icons");
+  manifest.icons.forEach((icon) => {
+    const iconPath = path.join(ROOT, icon.src);
+    assert.ok(fs.existsSync(iconPath), `manifest icon file missing: ${icon.src}`);
+  });
+});
+
+test("index.html references manifest.json and an apple-touch-icon that both exist", () => {
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf-8");
+  const manifestLink = html.match(/<link rel="manifest" href="([^"]+)">/);
+  assert.ok(manifestLink, "index.html should link a web app manifest");
+  assert.ok(fs.existsSync(path.join(ROOT, manifestLink[1])), `linked manifest missing: ${manifestLink[1]}`);
+
+  const touchIconLink = html.match(/<link rel="apple-touch-icon" href="([^"]+)">/);
+  assert.ok(touchIconLink, "index.html should link an apple-touch-icon for iOS home screen support");
+  assert.ok(fs.existsSync(path.join(ROOT, touchIconLink[1])), `linked apple-touch-icon missing: ${touchIconLink[1]}`);
+});

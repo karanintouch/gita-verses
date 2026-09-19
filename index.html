@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gita Verses</title>
 <meta name="description" content="Every verse of the Bhagavad Gita, filterable by Krishna's instructions and promises.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#B85C1E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gita Verses">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&family=Noto+Serif+Devanagari:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -110,12 +116,19 @@
   @media (max-width: 880px){
     #sidebar{
       position:fixed; inset:0 22% 0 0; z-index:40;
-      transform:translateX(-101%);
+      /* a fixed pixel buffer, not a percentage of the sidebar's own width:
+         at its 260px min-width, -101% only clears its own right edge by
+         ~2.6px, which isn't a real margin — anything near that edge (the
+         close button's negative offset, the last item in a flex row, etc.)
+         still sits technically on-screen and can visually bleed through or
+         eat taps meant for #menu-btn behind it */
+      transform:translateX(calc(-100% - 100px));
       transition:transform .28s cubic-bezier(.4,0,.2,1);
       box-shadow:var(--shadow);
       min-width:260px;
+      pointer-events:none;
     }
-    #sidebar.open{ transform:translateX(0); }
+    #sidebar.open{ transform:translateX(0); pointer-events:auto; }
   }
   #sidebar-head{
     padding:20px 18px 14px;
@@ -243,7 +256,7 @@
   }
   .icon-btn{
     background:var(--surface-raise); border:1px solid var(--border); color:var(--ink);
-    width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
     cursor:pointer; flex:none;
   }
   .icon-btn:hover{ border-color:var(--border-strong); }
@@ -299,6 +312,7 @@
     min-height:calc(100% - 0px);
     display:flex; flex-direction:column;
   }
+  #card[hidden]{ display:none; }
   #card.fade{ animation:fadeIn .22s ease; }
   @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
 
@@ -426,6 +440,18 @@
     text-align:center; color:var(--ink-faint); font-size:.85rem; padding:40px 0;
   }
 
+  #loading-state{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    padding:120px 0; color:var(--ink-faint); font-size:.85rem;
+  }
+  #loading-state[hidden]{ display:none; }
+  .spinner{
+    width:28px; height:28px; border-radius:50%;
+    border:3px solid var(--border); border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
   /* ---------- instructions/promises info popover ---------- */
   #info-scrim{
     display:none; position:fixed; inset:0; background:hsl(20 20% 8% / .35); z-index:55;
@@ -536,6 +562,12 @@
   }
   #tour-card h3{ font-family:var(--font-serif); font-size:1.08rem; margin:0 0 6px; }
   #tour-card p{ font-size:.85rem; color:var(--ink-muted); line-height:1.5; margin:0 0 14px; }
+  #tour-swipe-hint{
+    display:flex; justify-content:center; color:var(--accent); margin:-4px 0 14px;
+    animation:swipeHint 1.4s ease-in-out infinite;
+  }
+  #tour-swipe-hint[hidden]{ display:none; }
+  @keyframes swipeHint{ 0%,100%{ transform:translateX(-4px); opacity:.55; } 50%{ transform:translateX(4px); opacity:1; } }
   #tour-card .tour-actions{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   #tour-skip{
     background:none; border:none; color:var(--ink-faint); font-size:.78rem; cursor:pointer;
@@ -602,7 +634,11 @@
     </div>
 
     <div id="content-pane">
-      <div id="card">
+      <div id="loading-state">
+        <div class="spinner"></div>
+        <p>Loading the Gita…</p>
+      </div>
+      <div id="card" hidden>
         <p class="chap-eyebrow" id="chap-eyebrow">Chapter 2 · Transcendental Knowledge</p>
         <div class="ref-row">
           <h1 id="verse-title">Bhagavad Gita 2.47</h1>
@@ -717,6 +753,12 @@
     <p class="tstep" id="tour-step-label">Step 1 of 5</p>
     <h3 id="tour-title"></h3>
     <p id="tour-text"></p>
+    <div id="tour-swipe-hint" hidden>
+      <svg viewBox="0 0 60 24" width="60" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18,4 6,12 18,20"/>
+        <polyline points="42,4 54,12 42,20"/>
+      </svg>
+    </div>
     <div class="tour-actions">
       <button id="tour-skip">Skip tour</button>
       <button id="tour-next">Next</button>
@@ -1256,8 +1298,13 @@
       target: function(){ return isMobile() ? document.getElementById("menu-btn") : document.getElementById("sidebar-head"); } },
     { title:"Instructions & Promises", text:"Switch collections to read only Krishna's instructions, or only His promises — every verse here is tagged.",
       target: function(){ return isMobile() ? document.getElementById("filter-pillbar") : document.getElementById("filter-tabs"); } },
-    { title:"Move verse to verse", text:"Step through the whole Gita — or, inside a filter, step through just that collection, in order.",
-      target: function(){ return isMobile() ? document.getElementById("bottombar") : document.getElementById("topbar"); } },
+    { title:"Move verse to verse", text: function(){
+        return isMobile()
+          ? "Swipe left or right anywhere on the verse to move between verses — or use these buttons."
+          : "Step through the whole Gita — or, inside a filter, step through just that collection, in order.";
+      },
+      target: function(){ return isMobile() ? document.getElementById("bottombar") : document.getElementById("topbar"); },
+      showSwipeHint: function(){ return isMobile(); } },
     { title:"Make it yours", text:"Show or hide Sanskrit, transliteration, translations and word-for-word meanings. Choose English, Hindi, or both. Switch Light or Dark here too.",
       target: function(){ return isMobile() ? document.getElementById("settings-btn-m") : document.getElementById("settings-btn-d"); } },
     { title:"Save a verse", text:"Copy the verse text or a direct link to it — right where you finish reading, at the bottom.",
@@ -1306,8 +1353,9 @@
     if (!el){ showTourStep(i+1); return; }
     document.getElementById("tour-step-label").textContent = "Step " + (i+1) + " of " + TOUR_STEPS.length;
     document.getElementById("tour-title").textContent = step.title;
-    document.getElementById("tour-text").textContent = step.text;
+    document.getElementById("tour-text").textContent = typeof step.text === "function" ? step.text() : step.text;
     document.getElementById("tour-next").textContent = (i === TOUR_STEPS.length-1) ? "Done" : "Next";
+    document.getElementById("tour-swipe-hint").hidden = !(step.showSwipeHint && step.showSwipeHint());
     el.scrollIntoView({ block:"center", inline:"nearest" });
     setTimeout(function(){ positionTourSpot(el); positionTourCard(el); }, 240);
   }
@@ -1369,6 +1417,38 @@
     });
   }
 
+  // Touch gestures on the reading pane: swipe left/right anywhere to move
+  // between verses, or swipe right from the very edge to open the chapter
+  // sidebar. Distinguished by where the touch *starts*, so the two never
+  // conflict; a large vertical component is treated as a scroll and ignored.
+  function wireSwipeGestures(){
+    var pane = document.getElementById("content-pane");
+    var EDGE_ZONE = 24, H_THRESHOLD = 70, V_TOLERANCE = 60;
+    var startX = 0, startY = 0, startedAtEdge = false, tracking = false;
+
+    pane.addEventListener("touchstart", function(e){
+      if (e.touches.length !== 1) { tracking = false; return; }
+      var t = e.touches[0];
+      startX = t.clientX; startY = t.clientY;
+      startedAtEdge = isMobile() && startX <= EDGE_ZONE && !document.getElementById("sidebar").classList.contains("open");
+      tracking = true;
+    }, { passive:true });
+
+    pane.addEventListener("touchend", function(e){
+      if (!tracking) return;
+      tracking = false;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - startX, dy = t.clientY - startY;
+      if (Math.abs(dy) > V_TOLERANCE) return;
+      if (startedAtEdge){
+        if (dx > H_THRESHOLD) openMobileSidebar();
+        return;
+      }
+      if (Math.abs(dx) < H_THRESHOLD) return;
+      if (dx < 0) goDelta(1); else goDelta(-1);
+    }, { passive:true });
+  }
+
   function boot(){
     loadPrefs();
     applyTheme();
@@ -1392,7 +1472,10 @@
       wireEvents();
       wireSettingsPanel();
       wireTour();
+      wireSwipeGestures();
       syncSettingsUI();
+      document.getElementById("loading-state").hidden = true;
+      document.getElementById("card").hidden = false;
       render(true);
       updateUrl();
 
@@ -1406,6 +1489,8 @@
         t.addEventListener("click", filterSidebarVisibility);
       });
     }).catch(function(err){
+      document.getElementById("loading-state").hidden = true;
+      document.getElementById("card").hidden = false;
       document.getElementById("card").innerHTML = '<p id="empty-note">Could not load verse data. (' + err + ')</p>';
     });
   }
