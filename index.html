@@ -512,6 +512,12 @@
     color:var(--ink-faint); font-weight:700; margin:0 0 10px;
   }
   .sp-note{ font-size:.82rem; color:var(--ink-muted); line-height:1.5; margin:0; }
+  .ack-box{
+    background:var(--instr-bg); border-left:3px solid var(--instr);
+    border-radius:4px 10px 10px 4px; padding:14px 16px;
+  }
+  .ack-text{ font-size:.82rem; color:var(--ink-muted); line-height:1.5; margin:0 0 6px; }
+  .ack-name{ font-family:var(--font-serif); font-size:1.25rem; font-weight:600; color:var(--instr); margin:0; }
 
   .seg{ display:flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; }
   .seg-btn{
@@ -556,6 +562,15 @@
     border-radius:12px; box-shadow:var(--shadow); padding:16px 18px;
     transition:top .25s ease, left .25s ease;
   }
+  #tour-card.centered{
+    top:50% !important; left:50% !important; transform:translate(-50%,-50%);
+    width:380px; padding:30px 28px; text-align:center;
+  }
+  #tour-card.centered .tstep{ font-size:.74rem; }
+  #tour-card.centered h3{ font-size:1.5rem; }
+  #tour-card.centered p{ font-size:1rem; }
+  #tour-card.centered .tour-actions{ justify-content:center; gap:16px; }
+  #tour-card.centered #tour-skip{ display:none; }
   #tour-card .tstep{
     font-size:.68rem; letter-spacing:.07em; text-transform:uppercase; font-weight:700;
     color:var(--accent); margin:0 0 6px;
@@ -735,7 +750,10 @@
 
       <section class="sp-section">
         <p class="sp-label">Acknowledgements</p>
-        <p class="sp-note">The classification of verses into Instructions and Promises follows the teaching of <strong>Varsha Shinde</strong>.</p>
+        <div class="ack-box">
+          <p class="ack-text">The classification of verses into Instructions and Promises follows the teaching of</p>
+          <p class="ack-name">Varsha Shinde</p>
+        </div>
       </section>
 
       <section class="sp-section">
@@ -1310,7 +1328,7 @@
     { title:"Save a verse", text:"Copy the verse text or a direct link to it — right where you finish reading, at the bottom.",
       target: function(){ return document.getElementById("action-row"); } },
     { title:"With gratitude", text:"The classification of these verses into Instructions and Promises follows the teaching of Varsha Shinde — this site is a small tribute to that. You'll find this note again under Display settings.",
-      target: function(){ return isMobile() ? document.getElementById("settings-btn-m") : document.getElementById("settings-btn-d"); } }
+      centered:true }
   ];
 
   function isMobile(){ return window.matchMedia("(max-width:880px)").matches; }
@@ -1341,7 +1359,8 @@
     var card = document.getElementById("tour-card");
     if (card.hidden) return;
     var step = TOUR_STEPS[state.tourIdx];
-    var el = step && step.target();
+    if (!step || step.centered) return;
+    var el = step.target();
     if (el){ positionTourSpot(el); positionTourCard(el); }
   }
 
@@ -1349,13 +1368,23 @@
     if (i >= TOUR_STEPS.length){ finishTour(); return; }
     state.tourIdx = i;
     var step = TOUR_STEPS[i];
-    var el = step.target();
-    if (!el){ showTourStep(i+1); return; }
+    var card = document.getElementById("tour-card");
+    var spot = document.getElementById("tour-spot");
+
     document.getElementById("tour-step-label").textContent = "Step " + (i+1) + " of " + TOUR_STEPS.length;
     document.getElementById("tour-title").textContent = step.title;
     document.getElementById("tour-text").textContent = typeof step.text === "function" ? step.text() : step.text;
     document.getElementById("tour-next").textContent = (i === TOUR_STEPS.length-1) ? "Done" : "Next";
     document.getElementById("tour-swipe-hint").hidden = !(step.showSwipeHint && step.showSwipeHint());
+    card.classList.toggle("centered", !!step.centered);
+
+    if (step.centered){
+      spot.hidden = true;
+      return;
+    }
+    spot.hidden = false;
+    var el = step.target();
+    if (!el){ showTourStep(i+1); return; }
     el.scrollIntoView({ block:"center", inline:"nearest" });
     setTimeout(function(){ positionTourSpot(el); positionTourCard(el); }, 240);
   }

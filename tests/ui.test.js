@@ -319,3 +319,28 @@ test("mobile: no content inside the closed sidebar bleeds onto the visible scree
   }
   await page.setViewportSize({ width: 1400, height: 900 });
 });
+
+test("the tour's closing 'With gratitude' step is centered on screen, not spotlight-anchored", async () => {
+  // this page's tour-done flag is permanently set (see before()), so the
+  // tour never auto-starts here — trigger it via Settings > Retake tour
+  await goto("?c=2&v=47");
+  await openSettings();
+  await page.click("#retake-tour");
+  await page.waitForSelector("#tour-card:not([hidden])", { timeout: 3000 });
+  for (let i = 0; i < 5; i++) {
+    await page.click("#tour-next");
+    await page.waitForTimeout(200);
+  }
+  const isCentered = await page.evaluate(() => document.getElementById("tour-card").classList.contains("centered"));
+  assert.ok(isCentered, "final tour step should have the .centered class");
+  const spotHidden = await page.evaluate(() => document.getElementById("tour-spot").hidden);
+  assert.ok(spotHidden, "final tour step should not show a spotlight cutout");
+
+  const box = await page.$eval("#tour-card", (el) => el.getBoundingClientRect());
+  const viewport = page.viewportSize();
+  const centerX = box.x + box.width / 2, centerY = box.y + box.height / 2;
+  assert.ok(Math.abs(centerX - viewport.width / 2) < 5, `card not horizontally centered: ${centerX} vs ${viewport.width / 2}`);
+  assert.ok(Math.abs(centerY - viewport.height / 2) < 5, `card not vertically centered: ${centerY} vs ${viewport.height / 2}`);
+
+  await page.click("#tour-next"); // finish
+});
