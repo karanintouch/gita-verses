@@ -15,6 +15,14 @@ before(async () => {
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   });
   page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  // Set this before the app's own boot() ever runs (not after), or its
+  // 700ms auto-start guided tour can fire mid-test and interfere — e.g. it
+  // force-closes the mobile sidebar as its first step.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("gita-tour-done", "1");
+    } catch (e) {}
+  });
 });
 
 after(async () => {
@@ -31,11 +39,6 @@ async function goto(query) {
   page.on("pageerror", (err) => pageErrors.push(String(err)));
   await page.goto(`${baseUrl}/index.html${query || ""}`);
   await page.waitForSelector("#sanskrit");
-  await page.evaluate(() => {
-    try {
-      localStorage.setItem("gita-tour-done", "1");
-    } catch (e) {}
-  });
   return pageErrors;
 }
 
@@ -151,4 +154,54 @@ test("jump-to-verse form navigates directly to the requested verse", async () =>
   await page.waitForFunction(() => document.getElementById("verse-title").textContent.includes("5.10"));
   const title = await page.textContent("#verse-title");
   assert.equal(title, "Bhagavad Gita 5.10");
+});
+
+test("mobile: the menu button opens the sidebar and isn't blocked by the off-canvas close button", async () => {
+  // Regression test: #sidebar-close used to be display:inline-flex at all
+  // times on mobile, positioned just off the sidebar's right edge. At
+  // narrow viewports the sidebar shrinks to its min-width, which shifted
+  // the close button back on-screen, directly on top of #menu-btn, and
+  // silently swallowed every tap on it.
+  await page.setViewportSize({ width: 320, height: 640 });
+  await goto("?c=2&v=47");
+
+  const menuBox = await page.$eval("#menu-btn", (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height };
+  });
+  const hitsMenuBtn = await page.evaluate(
+    ({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      return !!(el && el.closest("#menu-btn"));
+    },
+    { x: menuBox.x + menuBox.w / 2, y: menuBox.y + menuBox.h / 2 }
+  );
+  assert.ok(hitsMenuBtn, "a tap at the menu button's center should hit the menu button, not a hidden overlay");
+
+  await page.click("#menu-btn", { force: true });
+  await page.waitForSelector("#sidebar.open");
+  await page.click("#sidebar-close");
+  // wait for the .28s slide-out CSS transition to actually finish, not just
+  // for the "open" class to be removed — otherwise the sidebar is still
+  // mid-animation and legitimately overlaps menu-btn, which is a timing
+  // artifact of this test, not the bug being guarded against here
+  await page.waitForFunction(() => document.getElementById("sidebar").getBoundingClientRect().right <= 0);
+  // the actual regression only shows up on a *second* open, once the
+  // sidebar has been closed once already
+  await page.click("#menu-btn", { force: true });
+  await page.waitForSelector("#sidebar.open");
+
+  await page.setViewportSize({ width: 1400, height: 900 });
+});
+
+test("instructions/promises info popover opens on tap and defines both terms", async () => {
+  await goto("?c=2&v=47");
+  await page.click("#filter-tabs .tab-info");
+  await page.waitForSelector("#info-popover.show");
+  const text = await page.textContent("#info-popover");
+  assert.match(text, /Instructions/);
+  assert.match(text, /Promises/);
+
+  await page.click("#info-scrim", { position: { x: 5, y: 5 } });
+  await page.waitForSelector("#info-popover", { state: "hidden" });
 });

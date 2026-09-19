@@ -136,7 +136,11 @@
     display:none;
   }
   @media (max-width:880px){
-    #sidebar-close{
+    /* only rendered (and hit-testable) while the sidebar is actually open —
+       otherwise this sits just off its right edge and, at narrow viewports
+       where the sidebar shrinks to its min-width, can land on top of and
+       swallow taps on #menu-btn even while "closed" off-canvas */
+    #sidebar.open #sidebar-close{
       display:inline-flex; align-items:center; gap:6px;
       position:absolute; top:16px; right:-46px;
       background:var(--surface); border:1px solid var(--border);
@@ -149,6 +153,13 @@
   #filter-tabs{
     display:flex; gap:6px; padding:12px 14px; border-bottom:1px solid var(--border);
   }
+  .tab-info{
+    flex:none; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border-strong); background:var(--surface-raise);
+    color:var(--ink-muted); font-size:.85rem; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tab-info:hover{ background:var(--bg); }
   .tab{
     flex:1; border:1px solid var(--border); background:var(--surface-raise);
     color:var(--ink-muted); border-radius:8px; padding:7px 6px;
@@ -248,6 +259,7 @@
       background:var(--surface); position:sticky; top:0; z-index:5;
     }
     #filter-pillbar .tab{ font-size:.7rem; padding:6px 4px; }
+    #filter-pillbar .tab-info{ width:28px; height:28px; font-size:.78rem; }
   }
 
   #topbar{
@@ -413,6 +425,22 @@
   #empty-note{
     text-align:center; color:var(--ink-faint); font-size:.85rem; padding:40px 0;
   }
+
+  /* ---------- instructions/promises info popover ---------- */
+  #info-scrim{
+    display:none; position:fixed; inset:0; background:hsl(20 20% 8% / .35); z-index:55;
+  }
+  #info-scrim.show{ display:block; }
+  #info-popover{
+    display:none; position:fixed; z-index:56; width:270px; max-width:calc(100vw - 32px);
+    background:var(--surface-raise); border:1px solid var(--border-strong); border-radius:12px;
+    box-shadow:var(--shadow); padding:16px 18px;
+  }
+  #info-popover.show{ display:block; }
+  #info-popover .icon-btn{ position:absolute; top:8px; right:8px; width:28px; height:28px; }
+  #info-popover .info-item{ font-size:.85rem; color:var(--ink-muted); line-height:1.5; margin:0 0 10px; padding-right:16px; }
+  #info-popover .info-item:last-child{ margin-bottom:0; }
+  #info-popover .info-item strong{ color:var(--ink); }
 
   /* ---------- display settings panel ---------- */
   #settings-scrim{
@@ -627,6 +655,13 @@
       </button>
     </div>
   </main>
+
+  <div id="info-scrim"></div>
+  <div id="info-popover" role="dialog" aria-label="What Instructions and Promises mean" hidden>
+    <button class="icon-btn" id="info-close" aria-label="Close">✕</button>
+    <p class="info-item"><strong>Instructions</strong> — verses where Krishna directs an action: what to do, or how to act.</p>
+    <p class="info-item"><strong>Promises</strong> — verses where Krishna assures an outcome: what will come of it.</p>
+  </div>
 
   <div id="settings-scrim"></div>
   <aside id="settings-panel" aria-label="Display settings" aria-hidden="true">
@@ -1014,7 +1049,39 @@
         });
         container.appendChild(b);
       });
+      var info = document.createElement("button");
+      info.type = "button";
+      info.className = "tab-info";
+      info.setAttribute("aria-label", "What do Instructions and Promises mean?");
+      info.textContent = "?";
+      info.addEventListener("click", function(){ openInfoPopover(info); });
+      container.appendChild(info);
     });
+  }
+
+  function positionInfoPopover(anchorEl){
+    var r = anchorEl.getBoundingClientRect();
+    var pop = document.getElementById("info-popover");
+    var pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var top = r.bottom + 10;
+    if (top + ph > window.innerHeight - 12) top = Math.max(12, r.top - ph - 10);
+    var left = r.right - pw;
+    left = Math.min(Math.max(12, left), window.innerWidth - pw - 12);
+    pop.style.top = top + "px";
+    pop.style.left = left + "px";
+  }
+  function openInfoPopover(anchorEl){
+    var pop = document.getElementById("info-popover");
+    pop.hidden = false;
+    pop.classList.add("show");
+    document.getElementById("info-scrim").classList.add("show");
+    positionInfoPopover(anchorEl);
+  }
+  function closeInfoPopover(){
+    var pop = document.getElementById("info-popover");
+    pop.classList.remove("show");
+    pop.hidden = true;
+    document.getElementById("info-scrim").classList.remove("show");
   }
 
   function buildSidebarChapters(){
@@ -1283,6 +1350,10 @@
     document.getElementById("copy-verse").addEventListener("click", copyVerse);
     document.getElementById("copy-link").addEventListener("click", copyLink);
 
+    document.getElementById("info-close").addEventListener("click", closeInfoPopover);
+    document.getElementById("info-scrim").addEventListener("click", closeInfoPopover);
+    window.addEventListener("resize", closeInfoPopover);
+
     document.getElementById("jump-form").addEventListener("submit", function(e){
       e.preventDefault();
       var input = document.getElementById("jump-input");
@@ -1294,7 +1365,7 @@
       if (e.target.tagName === "INPUT") return;
       if (e.key === "ArrowRight") goDelta(1);
       if (e.key === "ArrowLeft") goDelta(-1);
-      if (e.key === "Escape") { closeMobileSidebar(); closeSettings(); }
+      if (e.key === "Escape") { closeMobileSidebar(); closeSettings(); closeInfoPopover(); }
     });
   }
 
