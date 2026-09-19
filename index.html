@@ -457,6 +457,7 @@
     font-size:.7rem; letter-spacing:.07em; text-transform:uppercase;
     color:var(--ink-faint); font-weight:700; margin:0 0 10px;
   }
+  .sp-note{ font-size:.82rem; color:var(--ink-muted); line-height:1.5; margin:0; }
 
   .seg{ display:flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; }
   .seg-btn{
@@ -659,6 +660,11 @@
           <button class="chip" data-lang="en">English <span class="chip-sub">As It Is</span></button>
           <button class="chip" data-lang="hi">हिन्दी <span class="chip-sub">Ramsukhdas</span></button>
         </div>
+      </section>
+
+      <section class="sp-section">
+        <p class="sp-label">Acknowledgements</p>
+        <p class="sp-note">The classification of verses into Instructions and Promises follows the teaching of <strong>Varsha Shinde</strong>.</p>
       </section>
 
       <section class="sp-section">
@@ -1188,7 +1194,9 @@
     { title:"Make it yours", text:"Show or hide Sanskrit, transliteration, translations and word-for-word meanings. Choose English, Hindi, or both. Switch Light or Dark here too.",
       target: function(){ return isMobile() ? document.getElementById("settings-btn-m") : document.getElementById("settings-btn-d"); } },
     { title:"Save a verse", text:"Copy the verse text or a direct link to it — right where you finish reading, at the bottom.",
-      target: function(){ return document.getElementById("action-row"); } }
+      target: function(){ return document.getElementById("action-row"); } },
+    { title:"With gratitude", text:"The classification of these verses into Instructions and Promises follows the teaching of Varsha Shinde — this site is a small tribute to that. You'll find this note again under Display settings.",
+      target: function(){ return isMobile() ? document.getElementById("settings-btn-m") : document.getElementById("settings-btn-d"); } }
   ];
 
   function isMobile(){ return window.matchMedia("(max-width:880px)").matches; }
