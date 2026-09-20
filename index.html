@@ -539,11 +539,12 @@
   }
   .chip[aria-pressed="true"] .chip-sub{ color:var(--instr); opacity:.75; }
 
-  #retake-tour{
+  #retake-tour, .sp-link-btn{
     display:flex; align-items:center; gap:7px; background:none; border:none;
     color:var(--accent); font-size:.8rem; font-weight:600; cursor:pointer; padding:4px 0;
+    text-decoration:none;
   }
-  #retake-tour svg{ width:15px; height:15px; }
+  #retake-tour svg, .sp-link-btn svg{ width:15px; height:15px; flex:none; }
 
   /* ---------- one-time tour ---------- */
   #tour-scrim{
@@ -761,6 +762,13 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Take the tour again
         </button>
+      </section>
+
+      <section class="sp-section">
+        <a class="sp-link-btn" href="https://forms.gle/exw2xA1qfLM9RmyP6" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+          Report an issue
+        </a>
       </section>
     </div>
   </aside>
